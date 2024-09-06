@@ -1,5 +1,7 @@
 function [INFO,ECOG_data,trials,FileInfo] = PreProcessECOG(subjectID,fname,baseDir)
 
+% This function currently has a hard-coded downsampling ratio of 10:1 because almost all of our recordings are made at 10 kHz.
+
 % Load INFO file and data files
 INFO = LoadInfoFile; % Load INFO file from Box Drive
 subjectPath = [baseDir subjectID '/'];
