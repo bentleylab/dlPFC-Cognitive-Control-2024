@@ -1,3 +1,4 @@
+
 %% Managing perception-action representations through the interplay of alpha and theta band activity
 % Paul Wendiggensen, Astrid Prochnow, Charlotte Pscherer, Alexander Münchau, Christian Frings, Christian Beste
 % 
@@ -181,11 +182,19 @@ for cond = 1:numel(conf.comparison)
     ylim([0 1]);
     legend show;
     
-    title('LF Power MVPA');
-    xlabel('Time (ms)')
-    ylabel('AUC')
-    grid off
-    legend off
+    if contains(conf.comparison(cond),'beta')
+        title('Beta Power MVPA');
+        xlabel('Time (ms)')
+        ylabel('AUC')
+        grid off
+        legend off
+    else
+        title('LF Power MVPA');
+        xlabel('Time (ms)')
+        ylabel('AUC')
+        grid off
+        legend off
+    end
 
     for ii = 1:numel(conf.figure_formattype)
         print(gcf,[conf.plotfolder filesep conf.comparison{cond} conf.baseline_string '_ACROSS_TIME'],conf.figure_formattype{ii},conf.figure_resolution);
@@ -193,91 +202,4 @@ for cond = 1:numel(conf.comparison)
     if numel(conf.comparison) > 1
         close
     end
-    
-    %% time*time
-    
-    % (this will take a few minutes again)
-    
-    results = data.result_timeXtime;
-    result_average = mv_combine_results(results, 'average');
-    result_average = mv_select_result(result_average, 'auc');
-    h = mv_plot_result(result_average,time_range,time_range);
-%     set(gca, 'FontName', conf.figure_fontname);
-%     caxis([0 1]);
-%     
-%     title([conf.comparison{cond} conf.baseline_string]);
-%     for ii = 1:numel(conf.figure_formattype)
-%         print(gcf,[conf.plotfolder filesep conf.comparison{cond} conf.baseline_string '_TEMPORAL_GENERALIZATION'],conf.figure_formattype{ii},conf.figure_resolution);
-%     end
-%     if numel(conf.comparison) > 1
-%         close
-%     end
-    
-
-    %%
-    cfg_stat = [];
-    cfg_stat.metric          = 'auc';
-    cfg_stat.test            = 'permutation';
-    cfg_stat.correctm        = 'cluster';  % correction method is cluster
-    cfg_stat.n_permutations  = conf.n_permutations;
-    
-    % Clusterstatistic is the actual statistic used for the clustertest.
-    % Normally the default value 'maxum' is used, we are setting it here
-    % explicitly for clarity. Maxsum adds up the statistics calculated at each
-    % time point (the latter are set below using cfg_stat.statistic)
-    cfg_stat.clusterstatistic = 'maxsum';
-    cfg_stat.alpha           = conf.clusteralpha; % use standard significance threshold of 5%
-    
-    % Level 2 stats design: we have to choose between within-subject and
-    % between-subjects. Between-subjects is relevant when there is two
-    % different experimental groups (eg patients vs controls) and we want to
-    % investigate whether their MVPA results are significantly different. Here,
-    % we have only one group and we want to see whether the AUC is
-    % significantly different from a null value, hence the statistical design
-    % is within-subject
-    cfg_stat.design          = 'within';
-    % cfg_stat.statistic defines how the difference between the AUC values and
-    % the null is calculated at each time point (across subjects).
-    % We can choose t-test or its nonparametric counterpart Wilcoxon test. We
-    % choose Wilcoxon here.
-    cfg_stat.statistic       = 'wilcoxon';
-    % The null value for AUC (corresponding to a random classifier) is 0.5
-    cfg_stat.null            = 0.5;
-    % clustercritval is a parameter that needs to be selected by the user. In a
-    % Level 2 (group level) test, it represents the critical cutoff value for
-    % the statistic. Here, we selected Wilcoxon, so clustercritval corresponds
-    % to the cutoff value for the z-statistic which is obtained by a normal
-    % approximation
-    cfg_stat.clustercritval = abs(norminv(conf.clustercritval/2));
-
-    
-    stat_level2 = mv_statistics(cfg_stat, results);
-    
-     % save time and AUC range and significant classification for reporting
-    TempGeneralization.comparison = conf.comparison(cond);
-    TempGeneralization.time_range = time_range;
-    TempGeneralization.AUCvalues = result_average.perf';
-    TempGeneralization.significant = stat_level2.mask;
-    save([char(conf.plotfolder),char('/stats_temporal_generalization_'),char(conf.comparison(cond)),char('.mat')],'TempGeneralization');
-    
-    % plot the grand average result again and indicate the cluster in bold
-    h = mv_plot_result(result_average, time_range, time_range, 'mask', stat_level2.mask);
-    set(gcf,'colormap',cmocean('thermal'))
-    set(gca, 'FontName', conf.figure_fontname);
-    set(gcf,'color','w');
-    set(gcf, 'Units', 'Centimeters', 'Position', [0, 0, 16, 16], 'PaperUnits', 'Centimeters', 'PaperSize', [16,16]);
-    
-    title('Beta Power Temporal Generalization');
-    xlabel('Test time (ms)')
-    ylabel('Train time (ms)')
-    cb = colorbar;
-    cb.Label.String = ['\bf' 'AUC' '\rm'];
-
-    for ii = 1:numel(conf.figure_formattype)
-        print(gcf,[conf.plotfolder filesep conf.comparison{cond} conf.baseline_string '_TEMPORAL_GENERALIZATION_MASK'],conf.figure_formattype{ii},conf.figure_resolution);
-    end
-    if numel(conf.comparison) > 1
-        close
-    end
-    
 end

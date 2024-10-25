@@ -25,13 +25,6 @@ for freq = 1:size(conf.frequency,2)
                 cfg.metric      = {'acc','auc'};
                 cfg.classifier  = 'svm';
                 [~,result_across_time{sbj}] = mv_classify(cfg,data,clabel);
-
-                % classification time x time
-                cfg             = [];
-                cfg.metric      = {'acc','auc'};
-                cfg.classifier  = 'svm';
-                [~,result_timeXtime{sbj}] = mv_classify_timextime(cfg,data,clabel);
-
         end
         
         save(fullfile('/Users/anaskhan/Documents/Bentley Lab/Analysis/Data/DLPFC/PD','D1_MVPA_step1',['MVPA_step1_',conf.frequency{freq},'.mat']),'result_timeXtime','result_across_time');
